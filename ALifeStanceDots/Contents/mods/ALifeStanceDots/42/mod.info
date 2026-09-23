@@ -1,0 +1,7 @@
+name=A-Life Stance Dots
+id=ALifeStanceDots
+author=JoshuaSHenderson
+modversion=1.0.0
+versionMin=42.0
+require=ProjectALifeNPCs
+description=Marks Project A-Life NPCs with a dot over their head: green if they are friendly to you, red if they are hostile, yellow if they are neutral.
