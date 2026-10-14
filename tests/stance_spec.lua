@@ -1,4 +1,4 @@
--- Self-check for the stance resolution in ALifeStanceDots.lua.
+-- Self-check for the status resolution in ALifeStanceDots.lua.
 -- Run with any Lua 5.x:
 --   lua tests/stance_spec.lua
 -- MODFILE may be preset by the harness; otherwise the default path is used.
@@ -15,47 +15,106 @@ setmetatable(player, { __index = function() return function() return nil end end
 
 local Dots = dofile(MODFILE)
 
-local function factions(map)
-    ProjectALife = ProjectALife or {}
-    ProjectALife.Catalog = { faction = function(id) return map[id] end }
+local friendlyFaction = { spawn = { peaceable = true } }
+local raiders = { spawn = { peaceable = false } }
+local militia = { spawn = { peaceable = true }, relations = { player = "suspicious" } }
+local guard = { relations = { player = "allied" } }
+
+local function reset()
+    ProjectALife = { Catalog = { faction = function(id)
+        return ({ ranger = friendlyFaction, raiders = raiders, militia = militia, guard = guard })[id]
+    end } }
+    ProjectALifeJimmy = nil
+    Dots.cache = {}
 end
+reset()
 
-local friendlyFaction = { spawn = { friendly = true } }
-local raiders = { spawn = { friendly = false } }
-local militia = { spawn = { friendly = true }, relations = { player = "suspicious" } }
+local function status(record) return Dots.statusOf(record, player) end
 
-ProjectALife = {}
-factions({ ranger = friendlyFaction, raiders = raiders, militia = militia })
-
--- faction default carries the stance
-assert(Dots.stanceOf({ factionId = "ranger" }, player) == "friendly")
-assert(Dots.stanceOf({ factionId = "raiders" }, player) == "hostile")
-assert(Dots.stanceOf({ factionId = "militia" }, player) == "careful")
+-- faction default carries the stance (MP fallback, no Relations loaded)
+assert(status({ factionId = "ranger" }) == "friendly")
+assert(status({ factionId = "raiders" }) == "hostile")
+assert(status({ factionId = "militia" }) == "careful")
+assert(status({ factionId = "guard" }) == "allied")
 
 -- authored spawn stance beats the faction default
-assert(Dots.stanceOf({ factionId = "raiders", memory = { spawnStance = "neutral" } }, player) == "neutral")
+assert(status({ factionId = "raiders", memory = { spawnStance = "neutral" } }) == "neutral")
 
--- per-actor overrides beat everything
-assert(Dots.stanceOf({ factionId = "ranger", memory = { hostileOverride = true } }, player) == "hostile")
-assert(Dots.stanceOf({ factionId = "raiders", memory = { hostileOverride = false } }, player) == "friendly")
-assert(Dots.stanceOf({ factionId = "ranger",
-    memory = { hostileToPlayerKeys = { ["sp:0"] = true } } }, player) == "hostile")
+-- per-actor overrides
+assert(status({ factionId = "ranger", memory = { hostileOverride = true } }) == "hostile")
+assert(status({ factionId = "raiders", memory = { hostileOverride = false } }) == "friendly")
+assert(status({ factionId = "ranger", memory = { hostileToPlayerKeys = { ["sp:0"] = true } } }) == "hostile")
 
--- earned reputation flips a friendly faction
+-- earned reputation: hostile beats even a forced friend, others shift the stance
 ProjectALife.StatusStore = { reputation = { relations = {
     { factionId = "ranger", status = "hostile", cause = "attack" },
+    { factionId = "raiders", status = "neutral" },
 } } }
-assert(Dots.stanceOf({ factionId = "ranger" }, player) == "hostile")
-assert(Dots.stanceOf({ factionId = "raiders" }, player) == "hostile")
+assert(status({ factionId = "ranger" }) == "hostile")
+assert(status({ factionId = "ranger", memory = { hostileOverride = false } }) == "hostile")
+assert(status({ factionId = "raiders" }) == "neutral")
 ProjectALife.StatusStore = nil
 
--- A-Life's own Relations module wins when it is loaded (singleplayer)
-ProjectALife.Relations = { playerStance = function() return "neutral" end }
-assert(Dots.stanceOf({ factionId = "raiders" }, player) == "neutral")
-ProjectALife.Relations = nil
+-- careful/neutral NPCs that are fighting you or hunting you go red
+assert(status({ factionId = "militia", activity = "combat",
+    memory = { combatTargetKind = "player", combatTargetPlayerKey = "sp:0" } }) == "hostile")
+assert(status({ factionId = "militia", activity = "combat",
+    memory = { combatTargetKind = "player", combatTargetPlayerKey = "bob" } }) == "careful")
+assert(status({ factionId = "ranger", memory = { targetUsername = "sp:0" } }) == "hostile")
 
--- unknown faction with no record data is treated as hostile, never nil
-assert(Dots.stanceOf({ factionId = "ghosts" }, player) == "hostile")
-assert(Dots.stanceOf(nil, player) == nil)
+-- companions: walking with you (until it runs out), Jeem ally following you
+assert(status({ factionId = "ranger", memory = { walkWith = { key = "sp:0", untilHours = 1e9 } } }) == "companion")
+assert(status({ factionId = "ranger", memory = { walkWith = { key = "bob", untilHours = 1e9 } } }) == "friendly")
+assert(status({ factionId = "ranger", memory = { admin = { jimmy = { jimmyOrder = { ally = true, player = "sp:0" } } } } })
+    == "companion")
+-- a companion who turns on you is hostile
+assert(status({ factionId = "ranger", memory = { hostileOverride = true,
+    walkWith = { key = "sp:0", untilHours = 1e9 } } }) == "hostile")
+
+-- A-Life's own Relations wins when loaded (singleplayer), incl. fairness' "careful"
+ProjectALife.Relations = {
+    playerStance = function() return "careful" end,
+    hostileToPlayer = function() return false end,
+}
+assert(status({ factionId = "raiders" }) == "careful")
+ProjectALife.Relations.hostileToPlayer = function() return true end
+assert(status({ factionId = "raiders" }) == "hostile")
+ProjectALife.Relations = { playerStance = function() return "friendly" end }
+ProjectALife.Party = { friendly = function(record) return record.uid == "pal" end }
+assert(status({ uid = "pal", factionId = "ranger" }) == "companion")
+assert(status({ uid = "other", factionId = "ranger" }) == "friendly")
+reset()
+
+-- Jeem: residents of your base, allies, and attackers from friendly factions
+ProjectALifeJimmy = { NpcSafety = {
+    yourResident = function(record) return record.uid == "home" end,
+    yourAlly = function(record) return record.uid == "crew" end,
+    attacking = function(record) return record.uid == "raid" end,
+} }
+assert(status({ uid = "home", factionId = "ranger" }) == "resident")
+assert(status({ uid = "crew", factionId = "ranger" }) == "allied")
+assert(status({ uid = "raid", factionId = "ranger" }) == "hostile")
+reset()
+
+-- unknown faction with no record data is neutral, as in Relations.basePlayerStance
+assert(status({ factionId = "ghosts" }) == "neutral")
+assert(status(nil) == nil)
+
+-- every status has an icon and a dot
+for name in pairs(Dots.STATUSES) do
+    for _, file in ipairs({ name, "dot_" .. name }) do
+        local path = MODFILE:gsub("lua/client/ALifeStanceDots/ALifeStanceDots%.lua$", "ui/ALifeStanceDots/" .. file .. ".png")
+        assert(io.open(path, "rb"), "missing texture " .. path):close()
+    end
+end
+
+-- sandbox options override the built-in settings
+SandboxVars = nil
+local icons, height = Dots.options()
+assert(icons == true and height == 1.15)
+SandboxVars = { ALifeStanceDots = { Style = 1, HeadHeight = 2.0 } }
+icons, height = Dots.options()
+assert(icons == false and height == 2.0)
+SandboxVars = nil
 
 print("stance_spec: ok")

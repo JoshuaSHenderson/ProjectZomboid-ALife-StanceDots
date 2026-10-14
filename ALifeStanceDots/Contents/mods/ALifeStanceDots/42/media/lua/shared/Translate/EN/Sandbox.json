@@ -1,0 +1,9 @@
+{
+    "Sandbox_ALifeStanceDots": "A-Life Stance Dots",
+    "Sandbox_ALifeStanceDots.Style": "Marker style",
+    "Sandbox_ALifeStanceDots.Style_tooltip": "Dots: a coloured dot per status. Icons: crossed swords, warning, shield, star, house.\nDefault Icons (2).",
+    "Sandbox_ALifeStanceDots.Style_option1": "Dots",
+    "Sandbox_ALifeStanceDots.Style_option2": "Icons",
+    "Sandbox_ALifeStanceDots.HeadHeight": "Marker height (tiles)",
+    "Sandbox_ALifeStanceDots.HeadHeight_tooltip": "How far above the NPC's feet the marker sits. Raise if it covers the hair, lower if it floats.\nDefault 1.15."
+}

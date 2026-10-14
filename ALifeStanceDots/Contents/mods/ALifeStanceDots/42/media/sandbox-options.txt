@@ -1,0 +1,14 @@
+VERSION = 1,
+
+option ALifeStanceDots.Style = {
+    type = enum, numValues = 2, default = 2,
+    page = ALifeStanceDots, translation = ALifeStanceDots.Style,
+    _tooltip = ALifeStanceDots.Style_tooltip,
+    valueTranslation = ALifeStanceDots.Style,
+}
+
+option ALifeStanceDots.HeadHeight = {
+    type = double, min = 0.5, max = 3.0, default = 1.15,
+    page = ALifeStanceDots, translation = ALifeStanceDots.HeadHeight,
+    _tooltip = ALifeStanceDots.HeadHeight_tooltip,
+}
