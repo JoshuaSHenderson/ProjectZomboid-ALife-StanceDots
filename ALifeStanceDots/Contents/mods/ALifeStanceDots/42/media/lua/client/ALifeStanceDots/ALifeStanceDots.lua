@@ -252,6 +252,15 @@ local function visible(shell)
     return not ok or seen ~= false
 end
 
+-- World position -> UI pixels, or nil when off camera. The isometric view;
+-- the Viewpoint add-on replaces this while a 3D view is on.
+function Dots.project(x, y, z, height)
+    local zoom = getCore():getZoom(0)
+    if zoom == nil or zoom <= 0 then zoom = 1 end
+    return (IsoUtils.XToScreen(x, y, z + height, 0) - getCameraOffX()) / zoom,
+        (IsoUtils.YToScreen(x, y, z + height, 0) - getCameraOffY()) / zoom
+end
+
 function Dots.render()
     if ProjectALife == nil then return end
     local player = getSpecificPlayer(0)
@@ -259,9 +268,6 @@ function Dots.render()
 
     local settings = Dots.settings
     local list = getCell():getZombieList()
-    local zoom = getCore():getZoom(0)
-    if zoom == nil or zoom <= 0 then zoom = 1 end
-    local offsetX, offsetY = getCameraOffX(), getCameraOffY()
     local px, py, pz = player:getX(), player:getY(), player:getZ()
     local range2 = settings.range * settings.range
     local half = settings.size / 2
@@ -280,9 +286,9 @@ function Dots.render()
                 local status = uid ~= nil and cachedStatus(uid, player, now) or nil
                 if uid ~= nil then seen[uid] = Dots.cache[uid] end
                 local icon = status ~= nil and visible(shell) and texture(prefix .. status) or nil
-                if icon ~= nil then
-                    local sx = (IsoUtils.XToScreen(x, y, z + height, 0) - offsetX) / zoom
-                    local sy = (IsoUtils.YToScreen(x, y, z + height, 0) - offsetY) / zoom
+                local sx, sy
+                if icon ~= nil then sx, sy = Dots.project(x, y, z, height) end
+                if sx ~= nil then
                     UIManager.DrawTexture(icon, sx - half, sy - half,
                         settings.size, settings.size, settings.alpha)
                 end

@@ -1,0 +1,10 @@
+name=A-Life Stance Dots - Viewpoint
+id=ALifeStanceDotsViewpoint
+author=JoshuaSHenderson
+modversion=1.0.0
+versionMin=42.21.0
+require=ALifeStanceDots,\Viewpoint,\ZombieBuddy
+javaJarFile=media/java/client/ALifeStanceDotsViewpoint.jar
+javaPkgName=alifestancedots.viewpoint
+ZBVersionMin=2.3.0
+description=Shows A-Life Stance Dots markers in Project Viewpoint's first and third person views. Enable only if you use Project Viewpoint.
