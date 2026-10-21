@@ -117,4 +117,30 @@ icons, height = Dots.options()
 assert(icons == false and height == 2.0)
 SandboxVars = nil
 
+-- Viewpoint add-on: 3D projection only while Viewpoint's 3D view is on
+local VPFILE = MODFILE:gsub("mods/ALifeStanceDots/42/media/lua/client/ALifeStanceDots/ALifeStanceDots%.lua$",
+    "mods/ALifeStanceDotsViewpoint/42/media/lua/client/ALifeStanceDotsViewpoint.lua")
+local isometric = function() return 1, 2 end
+Dots.project = isometric
+package.loaded["ALifeStanceDots/ALifeStanceDots"] = Dots
+dofile(VPFILE)
+local nextView, front = "first", true
+Viewpoint = { View = { next = function() return nextView end } }
+ALifeStanceDotsViewpoint = {
+    pixel = function() return front end,
+    pixelX = function() return 30 end,
+    pixelY = function() return 40 end,
+}
+local sx, sy = Dots.project(0, 0, 0, 1)
+assert(sx == 1 and sy == 2)                 -- isometric view
+nextView = "third"                          -- first person on
+sx, sy = Dots.project(0, 0, 0, 1)
+assert(sx == 30 and sy == 40)
+front = false                               -- behind the camera
+assert(Dots.project(0, 0, 0, 1) == nil)
+ALifeStanceDotsViewpoint = nil              -- 3D without the bridge: hide, never iso maths
+front = true
+assert(Dots.project(0, 0, 0, 1) == nil)
+Viewpoint = nil
+
 print("stance_spec: ok")
