@@ -12,3 +12,69 @@ option ALifeStanceDots.HeadHeight = {
     page = ALifeStanceDots, translation = ALifeStanceDots.HeadHeight,
     _tooltip = ALifeStanceDots.HeadHeight_tooltip,
 }
+
+option ALifeStanceDots.MapEnabled = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapEnabled,
+    _tooltip = ALifeStanceDots.MapEnabled_tooltip,
+}
+
+option ALifeStanceDots.MapMaxRange = {
+    type = integer, min = 10, max = 300, default = 300,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapMaxRange,
+    _tooltip = ALifeStanceDots.MapMaxRange_tooltip,
+}
+
+option ALifeStanceDots.MapForceLineOfSight = {
+    type = boolean, default = false,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapForceLineOfSight,
+    _tooltip = ALifeStanceDots.MapForceLineOfSight_tooltip,
+}
+
+option ALifeStanceDots.MapResidentsAnywhere = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapResidentsAnywhere,
+    _tooltip = ALifeStanceDots.MapResidentsAnywhere_tooltip,
+}
+
+option ALifeStanceDots.MapShowHostile = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowHostile,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
+
+option ALifeStanceDots.MapShowCareful = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowCareful,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
+
+option ALifeStanceDots.MapShowNeutral = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowNeutral,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
+
+option ALifeStanceDots.MapShowFriendly = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowFriendly,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
+
+option ALifeStanceDots.MapShowAllied = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowAllied,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
+
+option ALifeStanceDots.MapShowCompanion = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowCompanion,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
+
+option ALifeStanceDots.MapShowResident = {
+    type = boolean, default = true,
+    page = ALifeStanceDots, translation = ALifeStanceDots.MapShowResident,
+    _tooltip = ALifeStanceDots.MapShow_tooltip,
+}
