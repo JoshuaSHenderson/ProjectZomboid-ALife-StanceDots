@@ -1,7 +1,8 @@
 # A-Life Stance Dots
 
 Client-side add-on for **Project A-Life [ALIFE NPCS]** (Workshop `3803984183`, mod id `ProjectALifeNPCs`).
-Draws an icon over every A-Life NPC's head. Red is **only** for people who
+Draws an icon over every A-Life NPC's head, and the same icons on the world
+map and minimap for the NPCs around you. Red is **only** for people who
 will attack you.
 
 | Icon | Status | Meaning |
@@ -135,6 +136,33 @@ Options on a running server; synced to every client):
 | --- | --- | --- |
 | Marker style | Icons | **Dots**: one colour per status (allied dark green, resident light blue). **Icons**: the shapes above |
 | Marker height (tiles) | `1.15` | 0.5–3.0 above the NPC's feet |
+| NPCs on the map | on | off hides map icons for everyone |
+| Map range limit (tiles) | `300` | caps each player's map range |
+| Map: only NPCs players have seen | off | forces "Only NPCs you can see" on everyone |
+| Map: residents at any distance | on | off: residents follow the range too |
+| Map (multiplayer): show *status* | on | one per status; multiplayer only, players' own ticks are ignored there |
+
+## Map
+
+Stance icons on the world map and minimap (`ALifeStanceDotsMap.lua`), drawn
+the same way A-Life NPCs on Map hooks the maps; disable that mod to avoid
+double markers. Each player sets it in **Options → Mods → A-Life Stance Dots**:
+
+| Option | Default | Notes |
+| --- | --- | --- |
+| Show NPCs on the map | on | |
+| NPCs to show on the map | all | per status; singleplayer only, the server decides in multiplayer |
+| Map range (tiles) | `100` | 10–300, capped by the server's limit |
+| Only NPCs you can see | off | line of sight; out of sight they stay where last seen… |
+| Remember seen NPCs (seconds) | `30` | …for this long (5–300) |
+| Always show your residents | on | Jeem residents at any distance |
+| World map icon size | `1` | multiplier, already scaled to screen height |
+| Minimap icon size | `0.75` | |
+
+The list refreshes once a second (sightings are noted even with the map
+closed). It reads the whole A-Life registry in singleplayer; a multiplayer
+client only knows the ~250 tiles the server mirrors, so far-off residents
+don't show there.
 
 ## Tuning
 
@@ -163,5 +191,6 @@ lua tests/stance_spec.lua
 
 No Lua on the box? `python -c "import lupa; lupa.LuaRuntime().execute(open('tests/stance_spec.lua').read())"`,
 or LuaJ on the game's Java: `java -cp luaj-jse-3.0.1.jar lua tests/stance_spec.lua`.
-Stubs the A-Life / Jeem globals and checks the status priority order and the
-Viewpoint projection switch.
+Stubs the A-Life / Jeem globals and checks the status priority order, the
+Viewpoint projection switch and the map filters (range, sightings, residents,
+server limits).

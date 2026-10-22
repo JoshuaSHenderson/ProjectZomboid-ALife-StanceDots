@@ -143,4 +143,75 @@ front = true
 assert(Dots.project(0, 0, 0, 1) == nil)
 Viewpoint = nil
 
+-- map markers: range, line of sight, status filter, residents at any distance
+local MAPFILE = MODFILE:gsub("ALifeStanceDots%.lua$", "ALifeStanceDotsMap.lua")
+local function shellAt(uid, x, y, seen)
+    return { isDead = function() return false end, getX = function() return x end, getY = function() return y end,
+        getModData = function() return { ProjectALifeUID = uid } end,
+        getSquare = function() return { isCanSee = function() return seen end } end }
+end
+local loaded = { shellAt("near", 10, 0, true), shellAt("hidden", 5, 0, false) }
+getCell = function() return { getZombieList = function()
+    return { size = function() return #loaded end, get = function(_, i) return loaded[i + 1] end } end } end
+reset()
+local records = {
+    { uid = "near", factionId = "raiders" },
+    { uid = "hidden", factionId = "ranger" },
+    { uid = "far", factionId = "ranger", worldPosition = { x = 500, y = 0 } },
+    { uid = "home", factionId = "ranger", worldPosition = { x = 900, y = 0 }, memory = { jimmyResident = {} } },
+    { uid = "gone", factionId = "ranger", lifecycle = "dead", worldPosition = { x = 1, y = 0 } },
+}
+ProjectALife.ActorRegistry = { each = function(visit) for _, r in ipairs(records) do visit(r) end end }
+ProjectALifeJimmy = { NpcSafety = { yourResident = function(record) return record.memory ~= nil end } }
+local me = { getX = function() return 0 end, getY = function() return 0 end }
+setmetatable(me, getmetatable(player))
+local Map = dofile(MAPFILE)
+local clock = 0
+local function shown(settings)
+    local out = {}
+    clock = clock + 1000
+    local shells = {}
+    for _, shell in ipairs(loaded) do shells[shell.getModData().ProjectALifeUID] = shell end
+    Map.spot(shells, clock)
+    for _, row in ipairs(Map.collect(me, settings, clock, shells)) do out[#out + 1] = row.status .. "@" .. row.x end
+    table.sort(out)
+    return table.concat(out, " ")
+end
+local function with(changes)
+    local s = {}
+    for k, v in pairs(Map.settings) do s[k] = v end
+    s.show = {}
+    for k, v in pairs(Map.settings.show) do s.show[k] = v end
+    for k, v in pairs(changes) do s[k] = v end
+    return s
+end
+assert(shown(with({})) == "friendly@5 hostile@10 resident@900")
+assert(shown(with({ lineOfSight = true })) == "hostile@10 resident@900")
+-- out of sight: stays where last seen until the memory runs out
+loaded[1] = shellAt("near", 20, 0, false)
+assert(shown(with({ lineOfSight = true, memory = 5 })) == "hostile@10 resident@900")
+clock = clock + 5000
+assert(shown(with({ lineOfSight = true, memory = 5 })) == "resident@900")
+loaded[1] = shellAt("near", 10, 0, true)
+assert(shown(with({ residentsAnywhere = false })) == "friendly@5 hostile@10")
+assert(shown(with({ show = { hostile = true } })) == "hostile@10")
+assert(shown(with({ range = 1000 })) == "friendly@5 friendly@500 hostile@10 resident@900")
+assert(shown(with({ enabled = false })) == "")
+-- server sandbox options cap the player's picks
+SandboxVars = { ALifeStanceDots = { MapMaxRange = 10, MapForceLineOfSight = true, MapResidentsAnywhere = false } }
+local capped = Map.limit(with({ range = 1000 }))
+assert(capped.range == 10 and capped.lineOfSight and not capped.residentsAnywhere and capped.enabled)
+SandboxVars.ALifeStanceDots = { MapEnabled = false }
+assert(Map.limit(with({})).enabled == false)
+assert(Map.read().range == 100)
+-- statuses: the player's ticks in singleplayer, the server's in multiplayer
+SandboxVars.ALifeStanceDots = { MapShowHostile = false }
+assert(Map.limit(with({})).show.hostile == true)
+isClient = function() return true end
+local served = Map.limit(with({ show = {} }))
+assert(served.show.hostile == false and served.show.friendly == true and served.show.resident == true)
+isClient = function() return false end
+SandboxVars = nil
+reset()
+
 print("stance_spec: ok")

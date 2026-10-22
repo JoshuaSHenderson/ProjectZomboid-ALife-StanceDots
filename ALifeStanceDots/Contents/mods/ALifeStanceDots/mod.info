@@ -1,7 +1,7 @@
 name=A-Life Stance Dots
 id=ALifeStanceDots
 author=JoshuaSHenderson
-modversion=1.2.0
+modversion=1.3.0
 versionMin=42.21.0
 require=ProjectALifeNPCs
-description=Marks Project A-Life NPCs with an icon over their head: red swords if they will attack you, orange if wary, yellow neutral, green friendly or allied, blue for companions and your base's residents.
+description=Marks Project A-Life NPCs with an icon over their head: red swords if they will attack you, orange if wary, yellow neutral, green friendly or allied, blue for companions and your base's residents. The same icons show on the world map and minimap for NPCs near you.

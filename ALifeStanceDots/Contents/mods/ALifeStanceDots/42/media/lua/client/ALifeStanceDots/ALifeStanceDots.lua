@@ -53,6 +53,7 @@ local function texture(name)
     Dots.textures[name] = value
     return value
 end
+Dots.texture = texture
 
 local function call(fn, ...)
     if type(fn) ~= "function" then return nil end
@@ -242,14 +243,19 @@ local function uidOf(shell)
     end
     return nil
 end
+Dots.uidOf = uidOf
 
-local function visible(shell)
-    if not Dots.settings.requireVisible then return true end
+-- Can player 0 see this shell's square?
+function Dots.inSight(shell)
     local ok, seen = pcall(function()
         local square = shell:getSquare() or shell:getCurrentSquare()
         return square == nil or square:isCanSee(0)
     end)
     return not ok or seen ~= false
+end
+
+local function visible(shell)
+    return not Dots.settings.requireVisible or Dots.inSight(shell)
 end
 
 -- World position -> UI pixels, or nil when off camera. The isometric view;

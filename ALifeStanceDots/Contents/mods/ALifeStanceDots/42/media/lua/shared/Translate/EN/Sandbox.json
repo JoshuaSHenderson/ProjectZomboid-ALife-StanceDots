@@ -5,5 +5,21 @@
     "Sandbox_ALifeStanceDots.Style_option1": "Dots",
     "Sandbox_ALifeStanceDots.Style_option2": "Icons",
     "Sandbox_ALifeStanceDots.HeadHeight": "Marker height (tiles)",
-    "Sandbox_ALifeStanceDots.HeadHeight_tooltip": "How far above the NPC's feet the marker sits. Raise if it covers the hair, lower if it floats.\nDefault 1.15."
+    "Sandbox_ALifeStanceDots.HeadHeight_tooltip": "How far above the NPC's feet the marker sits. Raise if it covers the hair, lower if it floats.\nDefault 1.15.",
+    "Sandbox_ALifeStanceDots.MapEnabled": "NPCs on the map",
+    "Sandbox_ALifeStanceDots.MapEnabled_tooltip": "Allow stance icons on the world map and minimap. Each player can still turn them off in Options > Mods.\nDefault on.",
+    "Sandbox_ALifeStanceDots.MapMaxRange": "Map range limit (tiles)",
+    "Sandbox_ALifeStanceDots.MapMaxRange_tooltip": "Most tiles from a player an NPC can be and still show on their map. Players pick their own range up to this.\nDefault 300.",
+    "Sandbox_ALifeStanceDots.MapForceLineOfSight": "Map: only NPCs players have seen",
+    "Sandbox_ALifeStanceDots.MapForceLineOfSight_tooltip": "Players only see NPCs on the map they can see or saw recently (their own 'Remember seen NPCs' time), whatever they pick.\nDefault off.",
+    "Sandbox_ALifeStanceDots.MapResidentsAnywhere": "Map: residents at any distance",
+    "Sandbox_ALifeStanceDots.MapResidentsAnywhere_tooltip": "Allow players to see their base's residents on the map at any distance. Off: residents follow the range like everyone else.\nDefault on.",
+    "Sandbox_ALifeStanceDots.MapShowHostile": "Map (multiplayer): show Hostile (red)",
+    "Sandbox_ALifeStanceDots.MapShowCareful": "Map (multiplayer): show Careful (orange)",
+    "Sandbox_ALifeStanceDots.MapShowNeutral": "Map (multiplayer): show Neutral (yellow)",
+    "Sandbox_ALifeStanceDots.MapShowFriendly": "Map (multiplayer): show Friendly (green)",
+    "Sandbox_ALifeStanceDots.MapShowAllied": "Map (multiplayer): show Allied (green shield)",
+    "Sandbox_ALifeStanceDots.MapShowCompanion": "Map (multiplayer): show Your group (blue star)",
+    "Sandbox_ALifeStanceDots.MapShowResident": "Map (multiplayer): show Your base's residents (blue house)",
+    "Sandbox_ALifeStanceDots.MapShow_tooltip": "Multiplayer only: the server decides which statuses show on everyone's map, and players' own ticks are ignored. In singleplayer each player picks in Options > Mods.\nDefault on."
 }
