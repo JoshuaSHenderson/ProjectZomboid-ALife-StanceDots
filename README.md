@@ -26,7 +26,17 @@ will attack you.
 | ![A neutral armed survivor down an alley](docs/screenshots/3d-neutral-armed.png) | ![A wary survivor walking past](docs/screenshots/3d-careful-closeup.png) |
 | First person: neutral (yellow) survivor with a gun | 3D view: a wary (orange) survivor up close |
 
+| ![A mixed crowd of hostile, wary, neutral and friendly survivors in the isometric view](docs/screenshots/iso-mixed-crowd.png) | ![The same mixed crowd in third person](docs/screenshots/3d-mixed-crowd.png) |
+| Isometric: a mixed crowd, every icon at a glance | Third person: the same crowd |
+
 ![Two friendly survivors up close in first person](docs/screenshots/3d-friendly-closeup.png)
+
+On the map ([Map](#map)):
+
+| | | |
+| --- | --- | --- |
+| ![The crowd's stance icons on the world map](docs/screenshots/map-world.png) | ![Friendly and hostile NPCs on the minimap](docs/screenshots/map-minimap-friendly.png) | ![The crowd on the minimap](docs/screenshots/map-minimap-crowd.png) |
+| World map | Minimap | Minimap, smaller icons |
 
 Priority, first hit wins: hostile → companion → resident → allied → stance.
 A companion or resident who turns on you goes red.
