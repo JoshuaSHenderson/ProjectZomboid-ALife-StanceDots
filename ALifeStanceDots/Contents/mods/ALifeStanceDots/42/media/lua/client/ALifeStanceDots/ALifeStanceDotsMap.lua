@@ -2,15 +2,16 @@
     A-Life Stance Dots - map markers
     Puts the same stance icons on the world map and the minimap, for the NPCs
     around you: within a set distance (optionally only the ones you can see),
-    plus your base's residents wherever they are. Each player picks which
-    statuses show in Options > Mods.
+    plus your base's residents wherever they are, and a grey X for a while
+    where one of them died. Each player picks which statuses show in
+    Options > Mods.
 ]]
 
 require "ALifeStanceDots/ALifeStanceDots"
 pcall(require, "PZAPI/ModOptions")
 
 local Dots = ALifeStanceDots
-local Map = { rows = {}, seen = {}, lastRefresh = 0 }
+local Map = { rows = {}, seen = {}, residents = {}, deaths = {}, lastRefresh = 0 }
 Dots.map = Map
 
 Map.ORDER = { "hostile", "careful", "neutral", "friendly", "allied", "companion", "resident" }
@@ -28,6 +29,7 @@ Map.settings = {
     lineOfSight = false,        -- only NPCs you can see, or saw within `memory`
     memory = 30,                -- seconds a sighting stays on the map
     residentsAnywhere = true,   -- your base's residents ignore the range
+    deathMinutes = 5,           -- how long a resident's death X stays; 0 = never shown
     size = 1,                   -- world map icon size
     miniSize = 0.75,            -- minimap icon size
 }
@@ -76,6 +78,7 @@ function Map.read()
         lineOfSight = options.lineOfSight:getValue() == true,
         memory = tonumber(options.memory:getValue()) or Map.settings.memory,
         residentsAnywhere = options.residentsAnywhere:getValue() == true,
+        deathMinutes = tonumber(options.deathMinutes:getValue()) or Map.settings.deathMinutes,
         size = tonumber(options.size:getValue()) or Map.settings.size,
         miniSize = tonumber(options.miniSize:getValue()) or Map.settings.miniSize,
     })
@@ -83,8 +86,10 @@ end
 
 -- Every A-Life record this machine knows: the whole registry where A-Life runs
 -- (singleplayer, host), the server's mirror on a multiplayer client.
--- ponytail: the MP mirror only covers ~250 tiles around you, so far-off
--- residents can't show there; a server-side snapshot would lift that.
+-- The MP mirror only covers ~250 tiles around you; Map.track remembers where
+-- your residents were last known so they stay on the map past that.
+-- ponytail: a remembered resident who moves or dies out there stays put; a
+-- server-side snapshot would lift that.
 local function eachRecord(visit)
     local alife = ProjectALife
     local registry = alife and alife.ActorRegistry or nil
@@ -116,7 +121,46 @@ local function residentOf(record, player)
     return safety ~= nil and call(safety.yourResident, record, player) == true
 end
 
+local function positionOf(record, shell)
+    if shell ~= nil then return shell:getX(), shell:getY() end
+    local at = record.worldPosition
+    if type(at) ~= "table" then return nil end
+    return tonumber(at.x), tonumber(at.y)
+end
+
 Map.MEMORY_MAX_S = 300
+Map.DEATH_MAX_MS = 30 * 60 * 1000
+
+-- Mark where one of your residents died.
+function Map.died(uid, x, y, now)
+    Map.residents[uid] = nil
+    if x ~= nil and y ~= nil then Map.deaths[uid] = { x = x, y = y, at = now } end
+end
+
+-- Keep the last known spot of each of your residents (they leave the MP mirror
+-- past ~250 tiles), note the ones that died, forget deaths past the longest time.
+function Map.track(player, now, shells)
+    eachRecord(function(record, uid)
+        if type(record) ~= "table" or uid == nil then return end
+        if record.lifecycle == "dead" then
+            local known = Map.residents[uid]
+            if known ~= nil then
+                local x, y = positionOf(record, nil)
+                Map.died(uid, x or known.x, y or known.y, now)
+            end
+            return
+        end
+        if not residentOf(record, player) then
+            Map.residents[uid] = nil
+            return
+        end
+        local x, y = positionOf(record, shells[uid])
+        if x ~= nil and y ~= nil then Map.residents[uid] = { x = x, y = y } end
+    end)
+    for uid, death in pairs(Map.deaths) do
+        if now - death.at > Map.DEATH_MAX_MS then Map.deaths[uid] = nil end
+    end
+end
 
 -- Note where player 0 sees each loaded NPC now; forget sightings past the longest memory.
 function Map.spot(shells, now)
@@ -139,16 +183,13 @@ function Map.collect(player, settings, now, shells)
     local memoryMs = settings.memory * 1000
     shells = shells or loadedShells()
     local anywhere = settings.residentsAnywhere and settings.show.resident
+    local listed = {}
 
     eachRecord(function(record, uid)
+        if uid ~= nil then listed[uid] = true end
         if type(record) ~= "table" or uid == nil or record.lifecycle == "dead" then return end
         local shell = shells[uid]
-        local x, y
-        if shell ~= nil then
-            x, y = shell:getX(), shell:getY()
-        elseif type(record.worldPosition) == "table" then
-            x, y = tonumber(record.worldPosition.x), tonumber(record.worldPosition.y)
-        end
+        local x, y = positionOf(record, shell)
         local sighted = true
         if settings.lineOfSight then
             local spot = Map.seen[uid]
@@ -164,6 +205,15 @@ function Map.collect(player, settings, now, shells)
         if not near and status ~= "resident" then return end   -- a resident who turned on you
         rows[#rows + 1] = { x = x, y = y, status = status, shell = shell }
     end)
+    if anywhere then
+        for uid, spot in pairs(Map.residents) do
+            if not listed[uid] then rows[#rows + 1] = { x = spot.x, y = spot.y, status = "resident" } end
+        end
+    end
+    local deathMs = settings.deathMinutes * 60 * 1000
+    for _, death in pairs(Map.deaths) do
+        if now - death.at <= deathMs then rows[#rows + 1] = { x = death.x, y = death.y, status = "dead" } end
+    end
     return rows
 end
 
@@ -186,6 +236,7 @@ local function refresh()
     end
     local shells = loadedShells()
     Map.spot(shells, now)
+    Map.track(player, now, shells)
     if not mapsVisible() then return end
     Map.rows = Map.collect(player, Map.read(), now, shells)
 end
@@ -205,7 +256,7 @@ local function draw(map, mini)
         local sx, sy = api:worldToUIX(x, y), api:worldToUIY(x, y)
         -- the minimap does not clip what it draws
         if sx >= half and sy >= half and sx <= map.width - half and sy <= map.height - half then
-            local icon = Dots.texture(prefix .. row.status)
+            local icon = Dots.texture(row.status == "dead" and "dead" or prefix .. row.status)
             if icon ~= nil then map:drawTextureScaled(icon, sx - half, sy - half, size, size, 1) end
         end
     end
@@ -246,7 +297,7 @@ if PZAPI ~= nil and PZAPI.ModOptions ~= nil then
             "IGUI_ALifeStanceDots_MapEnabled_tooltip"),
         statuses = o:addMultipleTickBox("mapStatuses", "IGUI_ALifeStanceDots_MapStatuses",
             "IGUI_ALifeStanceDots_MapStatuses_tooltip"),
-        range = o:addSlider("mapRange", "IGUI_ALifeStanceDots_MapRange", 10, 300, 10, Map.settings.range,
+        range = o:addSlider("mapRange", "IGUI_ALifeStanceDots_MapRange", 10, 250, 10, Map.settings.range,
             "IGUI_ALifeStanceDots_MapRange_tooltip"),
         lineOfSight = o:addTickBox("mapLineOfSight", "IGUI_ALifeStanceDots_MapLineOfSight", false,
             "IGUI_ALifeStanceDots_MapLineOfSight_tooltip"),
@@ -254,6 +305,8 @@ if PZAPI ~= nil and PZAPI.ModOptions ~= nil then
             Map.settings.memory, "IGUI_ALifeStanceDots_MapMemory_tooltip"),
         residentsAnywhere = o:addTickBox("mapResidentsAnywhere", "IGUI_ALifeStanceDots_MapResidents", true,
             "IGUI_ALifeStanceDots_MapResidents_tooltip"),
+        deathMinutes = o:addSlider("mapDeathMinutes", "IGUI_ALifeStanceDots_MapDeaths", 0, 30, 1,
+            Map.settings.deathMinutes, "IGUI_ALifeStanceDots_MapDeaths_tooltip"),
         size = o:addSlider("mapSize", "IGUI_ALifeStanceDots_MapSize", 0.5, 3, 0.25, 1,
             "IGUI_ALifeStanceDots_MapSize_tooltip"),
         miniSize = o:addSlider("mapMiniSize", "IGUI_ALifeStanceDots_MiniMapSize", 0.25, 3, 0.25,
@@ -265,9 +318,21 @@ if PZAPI ~= nil and PZAPI.ModOptions ~= nil then
     function o:apply() Map.lastRefresh = 0 end
 end
 
+-- A resident's shell dying in view: the record may not say so before the next refresh.
+local function zombieDied(zombie)
+    local uid = Dots.uidOf(zombie)
+    if uid ~= nil and Map.residents[uid] ~= nil then
+        Map.died(uid, zombie:getX(), zombie:getY(), getTimestampMs())
+        Map.lastRefresh = 0
+    end
+end
+
 if type(Events) == "table" and Events.OnGameStart ~= nil then
     Events.OnGameStart.Add(install)
     Events.OnTick.Add(safeRefresh)
+    if Events.OnZombieDead ~= nil then
+        Events.OnZombieDead.Add(function(zombie) pcall(zombieDied, zombie) end)
+    end
 end
 
 return Map

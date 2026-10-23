@@ -20,7 +20,7 @@ option ALifeStanceDots.MapEnabled = {
 }
 
 option ALifeStanceDots.MapMaxRange = {
-    type = integer, min = 10, max = 300, default = 300,
+    type = integer, min = 10, max = 250, default = 250,
     page = ALifeStanceDots, translation = ALifeStanceDots.MapMaxRange,
     _tooltip = ALifeStanceDots.MapMaxRange_tooltip,
 }

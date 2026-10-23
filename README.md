@@ -147,7 +147,7 @@ Options on a running server; synced to every client):
 | Marker style | Icons | **Dots**: one colour per status (allied dark green, resident light blue). **Icons**: the shapes above |
 | Marker height (tiles) | `1.15` | 0.5–3.0 above the NPC's feet |
 | NPCs on the map | on | off hides map icons for everyone |
-| Map range limit (tiles) | `300` | caps each player's map range |
+| Map range limit (tiles) | `250` | caps each player's map range |
 | Map: only NPCs players have seen | off | forces "Only NPCs you can see" on everyone |
 | Map: residents at any distance | on | off: residents follow the range too |
 | Map (multiplayer): show *status* | on | one per status; multiplayer only, players' own ticks are ignored there |
@@ -162,17 +162,18 @@ double markers. Each player sets it in **Options → Mods → A-Life Stance Dots
 | --- | --- | --- |
 | Show NPCs on the map | on | |
 | NPCs to show on the map | all | per status; singleplayer only, the server decides in multiplayer |
-| Map range (tiles) | `100` | 10–300, capped by the server's limit |
+| Map range (tiles) | `100` | 10–250, capped by the server's limit |
 | Only NPCs you can see | off | line of sight; out of sight they stay where last seen… |
 | Remember seen NPCs (seconds) | `30` | …for this long (5–300) |
-| Always show your residents | on | Jeem residents at any distance |
+| Always show your residents | on | Jeem residents at any distance; multiplayer: actual location only within 250 tiles of you, last known spot beyond |
+| Resident death marker (minutes) | `5` | light grey X where a resident died; 0–30, 0 hides it |
 | World map icon size | `1` | multiplier, already scaled to screen height |
 | Minimap icon size | `0.75` | |
 
 The list refreshes once a second (sightings are noted even with the map
 closed). It reads the whole A-Life registry in singleplayer; a multiplayer
-client only knows the ~250 tiles the server mirrors, so far-off residents
-don't show there.
+client only knows the 250 tiles the server mirrors, so a resident past that
+stays at the spot they were last known (it won't follow them or see them die).
 
 ## Tuning
 

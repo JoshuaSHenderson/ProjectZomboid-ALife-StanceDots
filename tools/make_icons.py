@@ -11,6 +11,7 @@ S = 128           # working size
 EDGE = (20, 20, 20, 255)
 RED, ORANGE, YELLOW = (235, 45, 35, 255), (255, 145, 20, 255), (250, 215, 40, 255)
 GREEN, BLUE = (60, 220, 90, 255), (60, 140, 255, 255)
+GREY = (200, 200, 200, 255)
 
 
 def save(img, name):
@@ -94,6 +95,16 @@ def house():
     return img
 
 
+def cross():
+    """Where a resident died (map only, both styles)."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for c, w in ((EDGE, 22 + 14), (GREY, 22)):
+        d.line([(24, 24), (104, 104)], fill=c, width=w)
+        d.line([(104, 24), (24, 104)], fill=c, width=w)
+    return img
+
+
 if __name__ == "__main__":
     save(swords(), "hostile")
     save(warning(), "careful")
@@ -102,6 +113,7 @@ if __name__ == "__main__":
     save(shield(), "allied")
     save(star(), "companion")
     save(house(), "resident")
+    save(cross(), "dead")
     # "Dots" style: one colour per status
     for name, colour in [("hostile", RED), ("careful", ORANGE), ("neutral", YELLOW), ("friendly", GREEN),
                          ("allied", (20, 140, 70, 255)), ("companion", BLUE), ("resident", (120, 220, 255, 255))]:

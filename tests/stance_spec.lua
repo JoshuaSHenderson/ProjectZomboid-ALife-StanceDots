@@ -197,6 +197,26 @@ assert(shown(with({ residentsAnywhere = false })) == "friendly@5 hostile@10")
 assert(shown(with({ show = { hostile = true } })) == "hostile@10")
 assert(shown(with({ range = 1000 })) == "friendly@5 friendly@500 hostile@10 resident@900")
 assert(shown(with({ enabled = false })) == "")
+-- a resident the MP mirror dropped stays at the last known spot
+local function track() Map.track(me, clock, {}) end
+track()
+local home = table.remove(records, 4)
+track()
+assert(shown(with({})) == "friendly@5 hostile@10 resident@900")
+assert(shown(with({ residentsAnywhere = false })) == "friendly@5 hostile@10")
+-- ...and a grey X where they die, for deathMinutes
+home.lifecycle = "dead"
+home.worldPosition = { x = 950, y = 0 }
+records[#records + 1] = home
+track()
+assert(shown(with({})) == "dead@950 friendly@5 hostile@10")
+assert(shown(with({ deathMinutes = 0 })) == "friendly@5 hostile@10")
+clock = clock + 6 * 60 * 1000
+assert(shown(with({})) == "friendly@5 hostile@10")
+table.remove(records)
+records[#records + 1] = { uid = "home", factionId = "ranger", worldPosition = { x = 900, y = 0 },
+    memory = { jimmyResident = {} } }
+Map.deaths = {}
 -- server sandbox options cap the player's picks
 SandboxVars = { ALifeStanceDots = { MapMaxRange = 10, MapForceLineOfSight = true, MapResidentsAnywhere = false } }
 local capped = Map.limit(with({ range = 1000 }))

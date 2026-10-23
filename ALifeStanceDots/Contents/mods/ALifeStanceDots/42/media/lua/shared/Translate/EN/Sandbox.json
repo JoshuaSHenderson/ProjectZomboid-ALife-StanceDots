@@ -9,7 +9,7 @@
     "Sandbox_ALifeStanceDots.MapEnabled": "NPCs on the map",
     "Sandbox_ALifeStanceDots.MapEnabled_tooltip": "Allow stance icons on the world map and minimap. Each player can still turn them off in Options > Mods.\nDefault on.",
     "Sandbox_ALifeStanceDots.MapMaxRange": "Map range limit (tiles)",
-    "Sandbox_ALifeStanceDots.MapMaxRange_tooltip": "Most tiles from a player an NPC can be and still show on their map. Players pick their own range up to this.\nDefault 300.",
+    "Sandbox_ALifeStanceDots.MapMaxRange_tooltip": "Most tiles from a player an NPC can be and still show on their map. Players pick their own range up to this.\nDefault 250.",
     "Sandbox_ALifeStanceDots.MapForceLineOfSight": "Map: only NPCs players have seen",
     "Sandbox_ALifeStanceDots.MapForceLineOfSight_tooltip": "Players only see NPCs on the map they can see or saw recently (their own 'Remember seen NPCs' time), whatever they pick.\nDefault off.",
     "Sandbox_ALifeStanceDots.MapResidentsAnywhere": "Map: residents at any distance",
